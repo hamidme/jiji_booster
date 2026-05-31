@@ -1,7 +1,6 @@
 import json
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
-from django.templatetags.static import static as static_url
 import anthropic
 from decouple import config
 
@@ -19,13 +18,13 @@ def pwa_manifest(request):
         "theme_color": "#00a651",
         "icons": [
             {
-                "src": request.build_absolute_uri(static_url("booster/icons/icon-192.png")),
+                "src": "/static/booster/icons/icon-192.png",
                 "sizes": "192x192",
                 "type": "image/png",
                 "purpose": "any",
             },
             {
-                "src": request.build_absolute_uri(static_url("booster/icons/icon-512.png")),
+                "src": "/static/booster/icons/icon-512.png",
                 "sizes": "512x512",
                 "type": "image/png",
                 "purpose": "any maskable",
@@ -37,21 +36,21 @@ def pwa_manifest(request):
 _SW_JS = """\
 const CACHE = 'jiji-booster-v2';
 
+// Install: skip waiting immediately — no network calls that could fail
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
-  self.skipWaiting();
+  e.waitUntil(self.skipWaiting());
 });
 
+// Activate: clear old caches, claim all clients
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Network-first for GETs; skip POST (form submissions go straight to server)
+// Fetch: network-first, cache lazily; skip POST
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(

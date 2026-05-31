@@ -1,8 +1,20 @@
 import json
+from pathlib import Path
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 import anthropic
 from decouple import config
+
+_ICONS_DIR = Path(__file__).resolve().parent / 'static' / 'booster' / 'icons'
+_ICON_192 = (_ICONS_DIR / 'icon-192.png').read_bytes()
+_ICON_512 = (_ICONS_DIR / 'icon-512.png').read_bytes()
+
+
+def icon_png(request, size):
+    data = _ICON_192 if size <= 192 else _ICON_512
+    res = HttpResponse(data, content_type='image/png')
+    res['Cache-Control'] = 'public, max-age=31536000, immutable'
+    return res
 
 
 def pwa_manifest(request):
@@ -18,13 +30,13 @@ def pwa_manifest(request):
         "theme_color": "#00a651",
         "icons": [
             {
-                "src": "/static/booster/icons/icon-192.png",
+                "src": "/icon-192.png",
                 "sizes": "192x192",
                 "type": "image/png",
                 "purpose": "any",
             },
             {
-                "src": "/static/booster/icons/icon-512.png",
+                "src": "/icon-512.png",
                 "sizes": "512x512",
                 "type": "image/png",
                 "purpose": "any maskable",

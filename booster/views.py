@@ -72,8 +72,6 @@ def service_worker(request):
     res['Cache-Control'] = 'no-cache'
     return res
 
-client = anthropic.Anthropic(api_key=config('ANTHROPIC_API_KEY'))
-
 SYSTEM_PROMPT = """You are an expert Nigerian e-commerce copywriter and digital marketing specialist
 with deep knowledge of Jiji.ng marketplace. You help Nigerian sellers write compelling, optimized
 product listings that sell fast.
@@ -160,6 +158,7 @@ Generate:
 5. seo_keywords — List of 8-12 search terms Nigerians use on Jiji.ng for this product"""
 
             try:
+                client = anthropic.Anthropic(api_key=config('ANTHROPIC_API_KEY'))
                 response = client.messages.create(
                     model="claude-opus-4-7",
                     max_tokens=2560,

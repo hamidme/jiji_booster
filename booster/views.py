@@ -1,35 +1,12 @@
 import json
-import struct
-import zlib
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
+from django.templatetags.static import static as static_url
 import anthropic
 from decouple import config
 
 
-# ---------------------------------------------------------------------------
-# PWA helpers — icon PNGs generated from stdlib only (no Pillow needed)
-# ---------------------------------------------------------------------------
-
-def _solid_png(size, r, g, b):
-    def chunk(t, d):
-        c = t + d
-        return struct.pack('>I', len(d)) + c + struct.pack('>I', zlib.crc32(c) & 0xFFFFFFFF)
-    raw = b''.join(b'\x00' + bytes([r, g, b] * size) for _ in range(size))
-    return (
-        b'\x89PNG\r\n\x1a\n'
-        + chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 2, 0, 0, 0))
-        + chunk(b'IDAT', zlib.compress(raw))
-        + chunk(b'IEND', b'')
-    )
-
-
-_ICON_192 = _solid_png(192, 0, 166, 81)   # #00a651
-_ICON_512 = _solid_png(512, 0, 166, 81)
-
-
 def pwa_manifest(request):
-    base = f"{request.scheme}://{request.get_host()}"
     return JsonResponse({
         "name": "Jiji Booster",
         "short_name": "JijiBoost",
@@ -41,15 +18,20 @@ def pwa_manifest(request):
         "background_color": "#ffffff",
         "theme_color": "#00a651",
         "icons": [
-            {"src": f"{base}/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-            {"src": f"{base}/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            {
+                "src": request.build_absolute_uri(static_url("booster/icons/icon-192.png")),
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any",
+            },
+            {
+                "src": request.build_absolute_uri(static_url("booster/icons/icon-512.png")),
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
         ],
     }, content_type='application/manifest+json')
-
-
-def icon_png(request, size):
-    data = _ICON_192 if size <= 192 else _ICON_512
-    return HttpResponse(data, content_type='image/png')
 
 
 _SW_JS = """\

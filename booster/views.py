@@ -35,7 +35,7 @@ def pwa_manifest(request):
 
 
 _SW_JS = """\
-const CACHE = 'jiji-booster-v1';
+const CACHE = 'jiji-booster-v2';
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
